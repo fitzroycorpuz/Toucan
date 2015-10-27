@@ -135,6 +135,7 @@ public class UserProfileActivity extends Activity
     Button btnSavePass;
     
     int statIndexer;
+    String distTick = "";
     
     private DatePicker dpBDay;
     
@@ -321,21 +322,23 @@ public class UserProfileActivity extends Activity
                 dialogPref = new Dialog(UserProfileActivity.this);
                 dialogPref.requestWindowFeature(Window.FEATURE_NO_TITLE);
                 dialogPref.setContentView(R.layout.activity_profile_distance_settings);
-           /*     
+               
                 rbDistance = (RangeBar) dialogPref.findViewById(R.id.rbDistance);
                 rbDistance.setRangeBarEnabled(false);
-                rbDistance.setPinColor(getResources().getColor(R.color.toucan_yellow));
-                rbDistance.setConnectingLineColor(getResources().getColor(R.color.toucan_yellow));
-                rbDistance.setSelectorColor(getResources().getColor(R.color.toucan_yellow));
+                rbDistance.setSeekPinByValue(Float.parseFloat(db.getBroadcastDist()));
+                
+                rbDistance.setPinColor(getResources().getColor(R.color.EDWARD));
+                rbDistance.setConnectingLineColor(getResources().getColor(R.color.EDWARD));
+                rbDistance.setSelectorColor(getResources().getColor(R.color.EDWARD));
                 rbDistance.setPinRadius(30f);
                 rbDistance.setOnRangeBarChangeListener(new RangeBar.OnRangeBarChangeListener() {
                     @Override
                     public void onRangeChangeListener(RangeBar rangeBar, int leftPinIndex,
                             int rightPinIndex, String leftPinValue, String rightPinValue) {
-                    	Log.e("xx" + leftPinValue,"xx" + rightPinValue);
+                    	distTick = rightPinValue;
                     }
                 });
-            */
+            
                 Button dialogButton = (Button) dialogPref.findViewById(R.id.dialogButtonOK);
                 dialogButton.setOnClickListener(new OnClickListener()
                 {
@@ -343,9 +346,7 @@ public class UserProfileActivity extends Activity
                     public void onClick(View v)
                     {
                        
-                        
-                       // db.updateUserPreference(strLookingForStat, strSexOrien, strGenderPref, strRelStat, SBorien.toString());
-                        //jsonProfile.updateProfileOnServer(UserProfileActivity.this);
+                        db.updateBroadcastDist(distTick);
                         dialogPref.dismiss();
                     }
                 });

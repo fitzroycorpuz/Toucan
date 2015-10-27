@@ -106,6 +106,7 @@ public class SQLiteHandler{
 	private static final String OPTION_IS_RECIEVING_BROADCAST = "_is_rec_broadcast";
 	private static final String OPTION_IS_BROADCAST_TIMER_TICKING = "_is_broadcast_tick";
 	private static final String OPTION_IS_ACCOUNT_FAILED_TO_VALIDATE = "_is_failed_to_validate";
+	private static final String OPTION_DISTANCE_PREF = "_distance_pref";
 	
 
 	 private SQLiteDatabase sqLiteDatabase;
@@ -132,7 +133,7 @@ public class SQLiteHandler{
 		  public void onCreate(SQLiteDatabase db) {
 		   // TODO Auto-generated method stub
 		   //db.execSQL(SCRIPT_CREATE_DATABASE);
-			  String CREATE_LOGIN_TABLE = "CREATE TABLE " + TABLE_LOGIN + "(" + KEY_ID + " INTEGER PRIMARY KEY," + KEY_NAME + " TEXT," + KEY_PASS + " TEXT," + KEY_EMAIL + " TEXT UNIQUE," + KEY_UTYPE + " TEXT," + KEY_CREATED_AT + " TEXT," + KEY_FNAME + " TEXT," + KEY_AGE + " TEXT," + KEY_GENDER + " TEXT," + KEY_ABOUTME + " TEXT, " + KEY_LOOKING_FOR_STATUS + " TEXT, " + KEY_SEX_ORIEN + " TEXT, " + KEY_LOOKING_FOR_GENDER + " TEXT," + KEY_ORIEN_TO_SHOW + " TEXT, " + KEY_REL_STATUS + " TEXT, " + KEY_PRIVACY_IN_CHAT + " TEXT, " + KEY_PRIVACY_COM_CHAT + " TEXT, " + KEY_UPDATE_BASIC + " TEXT, " + KEY_UPDATE_PREF + " TEXT, " + KEY_UPDATE_PASS + " TEXT, " + KEY_UPDATE_STATUS_MES + " TEXT, " + KEY_LAST_UPDATE + " TEXT );";
+			  	String CREATE_LOGIN_TABLE = "CREATE TABLE " + TABLE_LOGIN + "(" + KEY_ID + " INTEGER PRIMARY KEY," + KEY_NAME + " TEXT," + KEY_PASS + " TEXT," + KEY_EMAIL + " TEXT UNIQUE," + KEY_UTYPE + " TEXT," + KEY_CREATED_AT + " TEXT," + KEY_FNAME + " TEXT," + KEY_AGE + " TEXT," + KEY_GENDER + " TEXT," + KEY_ABOUTME + " TEXT, " + KEY_LOOKING_FOR_STATUS + " TEXT, " + KEY_SEX_ORIEN + " TEXT, " + KEY_LOOKING_FOR_GENDER + " TEXT," + KEY_ORIEN_TO_SHOW + " TEXT, " + KEY_REL_STATUS + " TEXT, " + KEY_PRIVACY_IN_CHAT + " TEXT, " + KEY_PRIVACY_COM_CHAT + " TEXT, " + KEY_UPDATE_BASIC + " TEXT, " + KEY_UPDATE_PREF + " TEXT, " + KEY_UPDATE_PASS + " TEXT, " + KEY_UPDATE_STATUS_MES + " TEXT, " + KEY_LAST_UPDATE + " TEXT );";
 				db.execSQL(CREATE_LOGIN_TABLE);
 				
 				String CREATE_TABLE_CORRESPONDENTS = "CREATE TABLE " + TABLE_CORRESPONDENTS + "(" + CORRESPONDENT_ID + " INTEGER PRIMARY KEY, "+  CORRESPONDENT_USERNAME + " TEXT, " +   CORRESPONDENT_EMAIL + " TEXT," +   CORRESPONDENT_FNAME + " TEXT);";
@@ -144,17 +145,21 @@ public class SQLiteHandler{
 				
 				String DATABASE_CREATE_2 = "create table " + DATABASE_TABLE_2 + "(" + PROFILE_ID + " integer PRIMARY KEY AUTOINCREMENT UNIQUE, " + PROFILE_USER_ID + " integer," + PROFILE_USERNAME + " TEXT," + PROFILE_DISTANCE + " integer," + PROFILE_FNAME + " TEXT," + PROFILE_LNAME + " TEXT," + PROFILE_AGE + " integer," + PROFILE_GENDER + " TEXT," + PROFILE_LOOKING_FOR + " TEXT," + PROFILE_DATE_SEEN + " date, " + PROFILE_SHOWN + " integer, " + PROFILE_ABOUTME + " TEXT, " + PROFILE_LOOKING_TYPE + " TEXT, " + PROFILE_STATUS + " TEXT, " + PROFILE_EMAIL + " TEXT );";
 				db.execSQL(DATABASE_CREATE_2);
+				
 				String DATABASE_CREATE_3 = "create table " + DATABASE_TABLE_3 + "(" + BROAD_ID + " integer PRIMARY KEY AUTOINCREMENT UNIQUE, " + BROADCAST_TYPE + " integer," + BROADCAST_FROM + " TEXT," + BROADCAST_MESSAGE + " TEXT," + BROADCAST_DATE + " date," + BROADCAST_LOCATION_LONG + " float, "+ BROADCAST_LOCATION_LAT + " float, "+ BROADCAST_LOCATION_LOCAL + " TEXT, " + BROADCAST_REACH + " TEXT, "+ BROADCAST_STATUS  + " TEXT );";
 				Log.e("CREATE 3", DATABASE_CREATE_3);
 				db.execSQL(DATABASE_CREATE_3);
+				
 				String DATABASE_CREATE_4 = "create table " + DATABASE_TABLE_4 + "(" + LOC_ID + " integer PRIMARY KEY AUTOINCREMENT UNIQUE, " + LOC_LONGI + " float," + LOC_LATI + " float," + LOC_DATE + " TEXT);";
 				db.execSQL(DATABASE_CREATE_4);
-				String DATABASE_CREATE_5 = "create table " + DATABASE_TABLE_5 + "(" + OPTION_ID + " integer PRIMARY KEY AUTOINCREMENT UNIQUE, " + OPTION_IS_RECIEVING_BROADCAST + " integer, " + OPTION_IS_BROADCAST_TIMER_TICKING +" integer, "+ OPTION_IS_ACCOUNT_FAILED_TO_VALIDATE +" integer );";
+				
+				String DATABASE_CREATE_5 = "create table " + DATABASE_TABLE_5 + "(" + OPTION_ID + " integer PRIMARY KEY AUTOINCREMENT UNIQUE, " + OPTION_IS_RECIEVING_BROADCAST + " integer, " + OPTION_IS_BROADCAST_TIMER_TICKING +" integer, "+ OPTION_IS_ACCOUNT_FAILED_TO_VALIDATE +" integer, "+ OPTION_DISTANCE_PREF+ " TEXT);";
 				db.execSQL(DATABASE_CREATE_5);
+				
 				String DATABASE_TABLE_5_INSERT_DEFAULT = "INSERT INTO " +  DATABASE_TABLE_5 + "(" 
 						+ OPTION_IS_RECIEVING_BROADCAST +  " ," +
 						OPTION_IS_BROADCAST_TIMER_TICKING  + " ," +
-						OPTION_IS_ACCOUNT_FAILED_TO_VALIDATE + " ) VALUES  ("+ 0 + " ," + 0 + "," + 0 + ");";
+						OPTION_IS_ACCOUNT_FAILED_TO_VALIDATE + ", " + OPTION_DISTANCE_PREF + " ) VALUES  ("+ 0 + " ," + 0 + "," + 0 + "," + 100 + ");";
 				
 				db.execSQL(DATABASE_TABLE_5_INSERT_DEFAULT);
 				Log.e(TAG, "Database tables created: "+ DATABASE_TABLE_5_INSERT_DEFAULT);
@@ -202,6 +207,24 @@ public class SQLiteHandler{
 		
 	}*/
 
+	public void updateBroadcastDist(String val) {
+				//SQLiteDatabase db = this.getReadableDatabase();
+				ContentValues contentValues = new ContentValues();
+				contentValues.put(OPTION_DISTANCE_PREF, val);
+				int succ = sqLiteDatabase.update(DATABASE_TABLE_5, contentValues, OPTION_ID + "=" + 1, null);
+				Log.e("HI", succ + " : " + val);
+	}
+	
+	public String getBroadcastDist() {
+		String last;
+		//SQLiteDatabase db = this.getWritableDatabase();
+		Cursor cursor = sqLiteDatabase.rawQuery("select " + OPTION_DISTANCE_PREF + " from " + DATABASE_TABLE_5 + " DESC LIMIT 1 ", null);
+		cursor.moveToFirst();
+		last = cursor.getString(0);
+		cursor.close();
+		return last+"";
+	}
+		 
 	public void updateBroadcasting(int val) {
 		//SQLiteDatabase db = this.getReadableDatabase();
 		ContentValues contentValues = new ContentValues();
