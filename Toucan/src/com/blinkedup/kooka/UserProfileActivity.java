@@ -16,6 +16,7 @@ import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.Request.Method;
 import com.android.volley.toolbox.StringRequest;
+import com.appyvet.rangebar.RangeBar;
 import com.blinkedup.kooka.R;
 import com.devspark.appmsg.AppMsg;
 import com.devspark.appmsg.AppMsg.Style;
@@ -65,10 +66,13 @@ import android.widget.Toast;
 
 public class UserProfileActivity extends Activity
 {
+	RangeBar rbDistance;
+	
 	NiceDialog nd;
     LinearLayout ln_personal;
     LinearLayout ln_preference;
     LinearLayout ln_settings;
+    LinearLayout ln_distance;
     Button ln_status;
     Dialog dialog;
     Dialog dialogPref;
@@ -142,7 +146,7 @@ public class UserProfileActivity extends Activity
     
     private void updateStatusDisplay(){
         if ((db.getStatusMessage().equals(""))||(db.getStatusMessage().equals("null"))) {
-            txtStat.setText("No status yet. nTap 'CHANGE' to update status");
+            txtStat.setText("No status yet.\nTap 'CHANGE' to update status");
         }
         else{
             txtStat.setText('"' + db.getStatusMessage() + '"');
@@ -309,6 +313,51 @@ public class UserProfileActivity extends Activity
                 dialog.getWindow().setAttributes(lp);
             }
         });
+        ln_distance = (LinearLayout) findViewById(R.id.ln_distance);
+        ln_distance.setOnClickListener(new View.OnClickListener()
+        {
+            public void onClick(View arg0)
+            {
+                dialogPref = new Dialog(UserProfileActivity.this);
+                dialogPref.requestWindowFeature(Window.FEATURE_NO_TITLE);
+                dialogPref.setContentView(R.layout.activity_profile_distance_settings);
+           /*     
+                rbDistance = (RangeBar) dialogPref.findViewById(R.id.rbDistance);
+                rbDistance.setRangeBarEnabled(false);
+                rbDistance.setPinColor(getResources().getColor(R.color.toucan_yellow));
+                rbDistance.setConnectingLineColor(getResources().getColor(R.color.toucan_yellow));
+                rbDistance.setSelectorColor(getResources().getColor(R.color.toucan_yellow));
+                rbDistance.setPinRadius(30f);
+                rbDistance.setOnRangeBarChangeListener(new RangeBar.OnRangeBarChangeListener() {
+                    @Override
+                    public void onRangeChangeListener(RangeBar rangeBar, int leftPinIndex,
+                            int rightPinIndex, String leftPinValue, String rightPinValue) {
+                    	Log.e("xx" + leftPinValue,"xx" + rightPinValue);
+                    }
+                });
+            */
+                Button dialogButton = (Button) dialogPref.findViewById(R.id.dialogButtonOK);
+                dialogButton.setOnClickListener(new OnClickListener()
+                {
+                    @Override
+                    public void onClick(View v)
+                    {
+                       
+                        
+                       // db.updateUserPreference(strLookingForStat, strSexOrien, strGenderPref, strRelStat, SBorien.toString());
+                        //jsonProfile.updateProfileOnServer(UserProfileActivity.this);
+                        dialogPref.dismiss();
+                    }
+                });
+                WindowManager.LayoutParams lp = new WindowManager.LayoutParams();
+                lp.copyFrom(dialogPref.getWindow().getAttributes());
+                lp.width = WindowManager.LayoutParams.MATCH_PARENT;
+                lp.height = WindowManager.LayoutParams.WRAP_CONTENT;
+                dialogPref.show();
+                dialogPref.getWindow().setAttributes(lp);
+            }
+        });
+        //////////////
         ln_preference = (LinearLayout) findViewById(R.id.ln_preference);
         ln_preference.setOnClickListener(new View.OnClickListener()
         {
