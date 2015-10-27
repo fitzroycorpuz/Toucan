@@ -15,6 +15,7 @@ import android.view.View.OnClickListener;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
+import com.toucan.objects.Correspondent;
 import com.toucan.objects.Users;
 import com.toucan.sqlite.SQLiteHandler;
 import com.toucan.utility.DividerItemDecoration;
@@ -60,16 +61,13 @@ public class ChatHistoryListFragment extends Fragment {
 		RecyclerView rvChatHistory = (RecyclerView)v.findViewById(R.id.rv_chat_history);
 		rvChatHistory.setLayoutManager(new LinearLayoutManager(getActivity()));
 		rvChatHistory.addItemDecoration(new DividerItemDecoration(getActivity(), DividerItemDecoration.VERTICAL_LIST));
-		List<Users> buddys = new ArrayList<Users>();
+		List<Correspondent> buddys = new ArrayList<Correspondent>();
 		
-		SQLiteHandler db = new SQLiteHandler(getActivity());
-		db.openToRead();
-		db.getMessageSenders();
-		db.close();
 		
-		for(int i=0;i<15;i++){
-			buddys.add(new Users());
-		}
+		
+		
+		buddys.addAll(Correspondent.downloadAllOffline(getActivity()));
+		
 		
 		ChatHistoryAdapter adapter = new ChatHistoryAdapter(getActivity(), buddys, mCallback);
 		rvChatHistory.setAdapter(adapter);
@@ -79,11 +77,11 @@ public class ChatHistoryListFragment extends Fragment {
 	private class ChatHistoryAdapter extends RecyclerView.Adapter<ChatHistoryAdapter.ViewHolder>{
 		
 		private LayoutInflater inflater;
-		private List<Users> buddys;
+		private List<Correspondent> buddys;
 		private OnShowChatHistoryListener listener;
 
 
-		public ChatHistoryAdapter(Context context, List<Users> buddys, OnShowChatHistoryListener listener){
+		public ChatHistoryAdapter(Context context, List<Correspondent> buddys, OnShowChatHistoryListener listener){
 			this.inflater = LayoutInflater.from(context);
 			this.buddys = buddys;
 			this.listener = listener;
@@ -97,7 +95,8 @@ public class ChatHistoryListFragment extends Fragment {
 		@Override
 		public void onBindViewHolder(ViewHolder vh, int position) {
 			
-			vh.tvBuddys.setText("Test");
+			vh.tvBuddys.setText(buddys.get(position).getUsername());
+			vh.tvEmail.setText(buddys.get(position).getEmail());
 		}
 
 		@Override
@@ -110,20 +109,22 @@ public class ChatHistoryListFragment extends Fragment {
 		class ViewHolder extends RecyclerView.ViewHolder implements OnClickListener{
 
 			 TextView tvBuddys ;
+			 TextView tvEmail;
 			private int position;
+			 
 
 			public ViewHolder(View view, int position) {
 				super(view);
 				this.position = position;
 				tvBuddys =(TextView)view.findViewById(R.id.tv_buddys_name);
-				
+				tvEmail =(TextView)view.findViewById(R.id.tv_buddys_email);
 				view.setOnClickListener(this);
 			}
 
 			@Override
 			public void onClick(View v) {
 				
-				Users buddy = buddys.get(position);
+				Correspondent buddy = buddys.get(position);
 				listener.onShowChatHistory(buddy);
 			}
 			
@@ -132,7 +133,7 @@ public class ChatHistoryListFragment extends Fragment {
 	
 	public interface OnShowChatHistoryListener{
 		
-		public void onShowChatHistory(Users buddy);
+		public void onShowChatHistory(Correspondent buddy);
 	}
 
 }

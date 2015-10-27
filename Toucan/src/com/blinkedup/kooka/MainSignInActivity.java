@@ -259,15 +259,19 @@ public class MainSignInActivity extends Activity {
 	}
 	
 	private void checkLogin(final String email, final String password) {
-		String tag_string_req = "login";
+		final String tag_string_req = "login";
 		pDialog.setMessage("Logging in ...");
+		
 		showDialog();
+		
+		
 		StringRequest strReq = new StringRequest(Method.POST, AppConfig.URL_LOGIN, new Response.Listener < String > () {@Override
 			public void onResponse(String response) {
 				Log.e(TAG, "Login Response: " + response.toString());
 				try {
 					JSONObject jObj = new JSONObject(response);
 					boolean error = jObj.getBoolean("error");
+					
 					if (!error) {
 						server_uid = jObj.getString("uid");
 						JSONObject user = jObj.getJSONObject("user");
@@ -306,6 +310,8 @@ public class MainSignInActivity extends Activity {
 			}
 		}, new Response.ErrorListener() {@Override
 			public void onErrorResponse(VolleyError error) {
+			
+				Log.e(TAG, error.getMessage());
 				makeNotify("Cannot connect to server", AppMsg.STYLE_ALERT);
 				hideDialog();
 			}
@@ -318,7 +324,9 @@ public class MainSignInActivity extends Activity {
 				return params;
 			}
 		};
+		
 		AppController.getInstance().addToRequestQueue(strReq, tag_string_req);
+		
 	}
 	
 	TimerTask showMainPageIntent;

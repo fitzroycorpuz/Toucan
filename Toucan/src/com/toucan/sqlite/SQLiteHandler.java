@@ -2,8 +2,11 @@ package com.toucan.sqlite;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 
 import com.blinkedup.kooka.R;
+import com.toucan.chatservice.OneComment;
+import com.toucan.objects.Correspondent;
 import com.toucan.objects.Users;
 import com.toucan.openfire.Account;
 import com.toucan.utility.DateUtils;
@@ -46,12 +49,21 @@ public class SQLiteHandler{
 	private static final String KEY_UPDATE_STATUS_MES = "update_status_mes";
 	private static final String KEY_LAST_UPDATE = "last_update";
 	
+	private static final String TABLE_CORRESPONDENTS = "correspondents";
+	public static final String CORRESPONDENT_ID = "_id";
+	public static final String CORRESPONDENT_USERNAME = "correspondent_username";
+	public static final String CORRESPONDENT_EMAIL = "correspondent_email";
+	public static final String CORRESPONDENT_FNAME = "correspondent_fname";
+	
+	//boolean left, String comment,boolean success, String date
 	private static final String TABLE_MESSAGES = "messages";
 	public static final String MSG_ID = "_id";
-	public static final String MSG_FRM = "msg_frm";
-	public static final String MSG_TO = "msg_to";
+	public static final String MSG_CORRESPONDENT_ID = "correspondent_id";
+	public static final String MSG_LEFT = "msg_left";
 	public static final String MSG_BODY = "msg_body";
+	public static final String MSG_SUCCESS = "msg_success";
 	public static final String MSG_DATE = "msg_date";
+	
 	
 	
 	private static final String DATABASE_TABLE_2 = "profile";
@@ -123,8 +135,12 @@ public class SQLiteHandler{
 			  String CREATE_LOGIN_TABLE = "CREATE TABLE " + TABLE_LOGIN + "(" + KEY_ID + " INTEGER PRIMARY KEY," + KEY_NAME + " TEXT," + KEY_PASS + " TEXT," + KEY_EMAIL + " TEXT UNIQUE," + KEY_UTYPE + " TEXT," + KEY_CREATED_AT + " TEXT," + KEY_FNAME + " TEXT," + KEY_AGE + " TEXT," + KEY_GENDER + " TEXT," + KEY_ABOUTME + " TEXT, " + KEY_LOOKING_FOR_STATUS + " TEXT, " + KEY_SEX_ORIEN + " TEXT, " + KEY_LOOKING_FOR_GENDER + " TEXT," + KEY_ORIEN_TO_SHOW + " TEXT, " + KEY_REL_STATUS + " TEXT, " + KEY_PRIVACY_IN_CHAT + " TEXT, " + KEY_PRIVACY_COM_CHAT + " TEXT, " + KEY_UPDATE_BASIC + " TEXT, " + KEY_UPDATE_PREF + " TEXT, " + KEY_UPDATE_PASS + " TEXT, " + KEY_UPDATE_STATUS_MES + " TEXT, " + KEY_LAST_UPDATE + " TEXT );";
 				db.execSQL(CREATE_LOGIN_TABLE);
 				
-				String CREATE_CHAT_HISTORY_TABLE = "CREATE TABLE " + TABLE_MESSAGES + "(" + MSG_ID + " INTEGER PRIMARY KEY, "+  MSG_FRM + " TEXT, " + MSG_TO + " TEXT, " +  MSG_BODY + " TEXT," + MSG_DATE + " TEXT );";
-				db.execSQL(CREATE_CHAT_HISTORY_TABLE);
+				String CREATE_TABLE_CORRESPONDENTS = "CREATE TABLE " + TABLE_CORRESPONDENTS + "(" + CORRESPONDENT_ID + " INTEGER PRIMARY KEY, "+  CORRESPONDENT_USERNAME + " TEXT, " +   CORRESPONDENT_EMAIL + " TEXT," +   CORRESPONDENT_FNAME + " TEXT);";
+				Log.e("CREATE_TABLE_CORRESPONDENTS", CREATE_TABLE_CORRESPONDENTS);
+				db.execSQL(CREATE_TABLE_CORRESPONDENTS);
+				
+				String CREATE_TABLE_MESSAGES = "CREATE TABLE " + TABLE_MESSAGES + "(" + MSG_ID + " INTEGER PRIMARY KEY, "+ MSG_CORRESPONDENT_ID + " INTEGER, "+  MSG_LEFT + " TEXT, " +   MSG_BODY + " TEXT," +   MSG_SUCCESS + " TEXT," + MSG_DATE + " TEXT );";
+				db.execSQL(CREATE_TABLE_MESSAGES);
 				
 				String DATABASE_CREATE_2 = "create table " + DATABASE_TABLE_2 + "(" + PROFILE_ID + " integer PRIMARY KEY AUTOINCREMENT UNIQUE, " + PROFILE_USER_ID + " integer," + PROFILE_USERNAME + " TEXT," + PROFILE_DISTANCE + " integer," + PROFILE_FNAME + " TEXT," + PROFILE_LNAME + " TEXT," + PROFILE_AGE + " integer," + PROFILE_GENDER + " TEXT," + PROFILE_LOOKING_FOR + " TEXT," + PROFILE_DATE_SEEN + " date, " + PROFILE_SHOWN + " integer, " + PROFILE_ABOUTME + " TEXT, " + PROFILE_LOOKING_TYPE + " TEXT, " + PROFILE_STATUS + " TEXT, " + PROFILE_EMAIL + " TEXT );";
 				db.execSQL(DATABASE_CREATE_2);
@@ -263,38 +279,109 @@ public class SQLiteHandler{
 		onCreate(db);
 	}*/
 	
-	public void getMessageSenders() {
-		String last;
-		//SQLiteDatabase db = this.getWritableDatabase();
+	public List<Correspondent> downloadAllCorrespondents() {
+	
 		
 		Log.e("SQLiteHandler", "getting message senders");
-		String table = TABLE_MESSAGES;
-		String[] columns = {MSG_FRM};
-		Cursor cursor = sqLiteDatabase.query(table, columns, null, null, null, null, null);
+		
+		
+		Cursor cursor = sqLiteDatabase.query(
+				TABLE_CORRESPONDENTS, 
+				new String[]{CORRESPONDENT_ID, CORRESPONDENT_USERNAME, CORRESPONDENT_EMAIL, CORRESPONDENT_FNAME}, 
+				null, null, null, null, null);
+		
+		List<Correspondent> correspondents = new ArrayList<Correspondent>();
 		if(cursor.moveToFirst()){
-			Log.e("SQLiteHandler", "test");
-			while(cursor.moveToNext()){
-				Log.e("Message Sender",cursor.getString(cursor.getColumnIndex(MSG_FRM)));
-			}
+			do{
+				long userId = cursor.getLong(cursor.getColumnIndex(CORRESPONDENT_ID));
+				String username = cursor.getString(cursor.getColumnIndex(CORRESPONDENT_USERNAME));
+				String email = cursor.getString(cursor.getColumnIndex(CORRESPONDENT_EMAIL));
+				String fname = cursor.getString(cursor.getColumnIndex(CORRESPONDENT_FNAME));
+				Log.e("SQLiteHandler",username + ", "+email+", "+fname);
+				Correspondent correspondent = new Correspondent(userId, username, email, fname);
+				correspondents.add(correspondent);
+			}while(cursor.moveToNext());
 		}
 		
 		//Log.e("B STATUS",last + "");
-		cursor.close();
+//		cursor.close();
+		
+		return correspondents;
 		
 	}
 	
-	public void insertReceivedMessage(String frm, String to, String body, String date){
-		ContentValues values = new ContentValues();
-
+	public List<OneComment> downloadMessages(long id) {
+		Log.e("SQLiteHandler", "getting messages");
+		Cursor cursor = sqLiteDatabase.query(
+				TABLE_MESSAGES, 
+				new String[]{MSG_LEFT, MSG_BODY, MSG_SUCCESS, MSG_DATE}, 
+				MSG_CORRESPONDENT_ID + "= '"+id+"'", 
+				null, null, null, null);
+		List<OneComment> conversation = new ArrayList<OneComment>();
 		
-		values.put(MSG_FRM, frm);
-		values.put(MSG_TO, to);
-		values.put(MSG_BODY, body);
+		if(cursor.moveToFirst()){
+			do{
+				
+				String left 		= cursor.getString(cursor.getColumnIndex(MSG_LEFT));
+				String msg			= cursor.getString(cursor.getColumnIndex(MSG_BODY));
+				String success		= cursor.getString(cursor.getColumnIndex(MSG_SUCCESS));
+				String date			= cursor.getString(cursor.getColumnIndex(MSG_DATE));
+				
+				OneComment comment 	= new OneComment(Boolean.parseBoolean(left), msg, Boolean.parseBoolean(success), date);
+				
+				conversation.add(comment);
+				
+			}while(cursor.moveToNext());
+		}
+		
+		return conversation;
+		
+	}
+	
+	
+	
+	public int downloadCorrespondentId(String username, String email, String fname) {
+		
+		Cursor cursor = sqLiteDatabase.query(
+				TABLE_CORRESPONDENTS, 
+				new String[]{CORRESPONDENT_ID}, 
+				CORRESPONDENT_USERNAME+"=? AND "+CORRESPONDENT_EMAIL+"=? AND "+CORRESPONDENT_FNAME+"=?", 
+				new String[]{username, email, fname}, 
+				null, null, null);
+		
+		if(cursor.moveToFirst()){
+			return cursor.getInt(cursor.getColumnIndex(CORRESPONDENT_ID));
+		}
+		
+		return -1;
+		
+	}
+	
+	public long saveCorrespondentOffline(String username, String email, String fname) {
+		ContentValues values = new ContentValues();
+		values.put(CORRESPONDENT_USERNAME, username);
+		values.put(CORRESPONDENT_EMAIL, email);
+		values.put(CORRESPONDENT_FNAME, fname);
+		
+		long id = sqLiteDatabase.insert(TABLE_CORRESPONDENTS, null, values);
+		Log.e(TAG, "new correspondent inserted into sqlite: " + id + " : " + fname);
+		return id;
+	}
+	
+	public void saveMessageOffline(long correspondentId,  boolean left, String comment, boolean success, String date){
+		ContentValues values = new ContentValues();
+		
+		
+		//String CREATE_TABLE_MESSAGES = "CREATE TABLE " + TABLE_MESSAGES + "(" + MSG_ID + " INTEGER PRIMARY KEY, "+ MSG_CORRESPONDENT_ID + " INTEGER, "+  MSG_LEFT + " TEXT, " +   MSG_BODY + " TEXT," +   MSG_SUCCESS + " TEXT," + MSG_DATE + " TEXT );";
+		values.put(MSG_CORRESPONDENT_ID, correspondentId);
+		values.put(MSG_LEFT, ""+left);
+		values.put(MSG_BODY, comment);
+		values.put(MSG_SUCCESS, ""+success);
 		values.put(MSG_DATE, date);
 	
 		long id = sqLiteDatabase.insert(TABLE_MESSAGES, null, values);
-		//db.close();
-		Log.e(TAG, "new msg inserted into sqlite: " + id + " : " + body+", frm: "+frm+ ", to: "+to);
+		
+		Log.e(TAG, "new msg inserted into sqlite: " + correspondentId + " left: "+left+", msg: "+comment+", success: "+success);
 	}
 	
 	public void insertNearbyUser(String userid, String username, int distance, String fname, String lname, String age, String gender, String looking_for, String date_seen, int shown, String about_me, String looking_type, String status, String email) {
@@ -862,4 +949,7 @@ public class SQLiteHandler{
 	//	db.close();
 		Log.d(TAG, "Deleted all user info from sqlite");
 	}
+
+	
+
 }

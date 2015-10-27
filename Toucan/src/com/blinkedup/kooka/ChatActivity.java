@@ -24,6 +24,7 @@ import org.jivesoftware.smack.util.StringUtils;
 import com.blinkedup.kooka.R;
 import com.toucan.chatservice.ChatAdapterActivity;
 import com.toucan.chatservice.OneComment;
+import com.toucan.objects.Correspondent;
 import com.toucan.openfire.Account;
 import com.toucan.openfire.XMPPLogic;
 import com.toucan.sqlite.SQLiteHandler;
@@ -69,6 +70,13 @@ public class ChatActivity extends Activity {
 	String int_broad;
 	String int_b_date;
 	Intent intentMes;
+
+	private boolean mFrmRotation;
+
+	private Correspondent mCorrespondent;
+	
+	
+
 	
 
 	@Override
@@ -89,6 +97,12 @@ public class ChatActivity extends Activity {
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.layoutmain);
+		
+		if(savedInstanceState!=null){
+			mFrmRotation = true;
+		}else{
+			mFrmRotation = false;
+		}
 
 		if (android.os.Build.VERSION.SDK_INT>=android.os.Build.VERSION_CODES.HONEYCOMB) {
 			 ActionBar actionBar = getActionBar();
@@ -110,7 +124,34 @@ public class ChatActivity extends Activity {
 	
 		intentMes = getIntent(); 
 		//String email = intentMes.getStringExtra("email");
+		final long userId=-1;
 		final String username = intentMes.getStringExtra("username");
+		final String email = getIntent().getStringExtra("email");
+		final String fname = getIntent().getStringExtra("fname");
+		
+		
+		mCorrespondent = new Correspondent(userId, username, email, fname);
+		
+		if(mCorrespondent.isExisting(this)){	//check if current correspondent exists in db
+			
+			//get all existing messages frm db
+			mCorrespondent.downloadOfflineMessages(this);
+			
+			
+			for(OneComment comment : mCorrespondent.getConversation()){
+				
+				Log.e("ChatActivity", "left: "+comment.left+", msg: "+comment.comment+", success: "+comment.success);
+				adapter.add(comment);
+			}
+			//clear conversation, 
+			//so only newly send and accepted messages will be save later
+			mCorrespondent.clearExistingConversation();
+			
+		}else{
+			//1st time chatting with correspondent
+		}
+		
+		
 		int_mes = "";
 		int_broad = "";
 		int_b_date = "";
@@ -121,6 +162,12 @@ public class ChatActivity extends Activity {
 			 int_b_date = intentMes.getStringExtra("INTENT_MESSAGE_DATE");
 		}
 		catch(Exception e){}
+		
+		
+//		intentMes.putExtra("email", email);
+//		intentMes.putExtra("username", username);
+//		intentMes.putExtra("fname", fname);
+		
 		
 		
       //  String fname = intentMes.getStringExtra("fname");
@@ -180,13 +227,8 @@ public class ChatActivity extends Activity {
 							listview.setAdapter(adapter);
 							Log.e("ADD","ayayay");
 							
-							//save newly created message to db
-							comment.saveOffline(
-									getApplicationContext(), 
-									StringUtils.parseBareAddress(to), 
-									DateUtils.millisToSimpleDate(
-											System.currentTimeMillis(), 
-											DateFormatz.DATE_FORMAT_5));
+							mCorrespondent.addMessage(comment);
+
 							
 				       }
 			}
@@ -209,6 +251,8 @@ public class ChatActivity extends Activity {
 				@Override
 				public void processPacket(Packet packet) {
 					final Message message = (Message) packet;
+					
+					
 					if (message.getBody() != null) {
 						final String fromName = StringUtils.parseBareAddress(message
 								.getFrom());
@@ -228,12 +272,7 @@ public class ChatActivity extends Activity {
 								adapter.add(comment);
 								listview.setAdapter(adapter);
 								
-								comment.saveOffline(
-										getApplicationContext(), 
-										fromName, 
-										DateUtils.millisToSimpleDate(
-												System.currentTimeMillis(), 
-												DateFormatz.DATE_FORMAT_5));
+								mCorrespondent.addMessage(comment);
 								
 							}
 						});
@@ -254,6 +293,13 @@ public class ChatActivity extends Activity {
 		super.onPause();
 		//connection.disconnect();
 		//Log.e("NULLIFIED","");
+		
+		if(isFinishing()){
+			// save conversation here
+			Log.i("ChatActivity", "saving msgs... ");
+			
+			mCorrespondent.saveOffline(this);
+		}
 	}
 	
 	
